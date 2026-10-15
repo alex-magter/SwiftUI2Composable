@@ -125,4 +125,4 @@ SwiftBridge.shared.install(registry: GeneratedSwiftBridge())
 
 ## License
 
-MIT
+Apache 2.0
