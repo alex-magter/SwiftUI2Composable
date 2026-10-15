@@ -1,19 +1,128 @@
-[![official project](http://jb.gg/badges/official.svg)](https://github.com/JetBrains#jetbrains-on-github)
+# SwiftUI2Composable
 
-# Multiplatform library template
+SwiftUI2Composable helps you to implement your Composable functions in SwiftUI without worrying about
+bridges, UIKit or reactivity. It automatically generates all the boilerplate for you so you can focus
+on implementing your real UI logic.
 
-## What is it?
+> Work in progress
 
-This repository contains a simple library project, intended to demonstrate a [Kotlin Multiplatform](https://kotlinlang.org/docs/multiplatform.html) library that is deployable to [Maven Central](https://central.sonatype.com/).
+## Installation
 
-The library has only one function: generate the [Fibonacci sequence](https://en.wikipedia.org/wiki/Fibonacci_sequence) starting from platform-provided numbers. Also, it has a test for each platform just to be sure that tests run.
+In the `build.gradle.kts` of your shared module:
 
-Note that no other actions or tools usually required for the library development are set up, such as [tracking of backwards compatibility](https://kotlinlang.org/docs/jvm-api-guidelines-backward-compatibility.html#tools-designed-to-enforce-backward-compatibility), explicit API mode, licensing, contribution guideline, code of conduct and others. You can find a guide for best practices for designing Kotlin libraries [here](https://kotlinlang.org/docs/api-guidelines-introduction.html).
+```kotlin
+plugins {
+    id("com.google.devtools.ksp") version "2.3.7"
+}
 
-## Guide
+kotlin {
+    sourceSets {
+        iosMain.dependencies {
+            implementation("io.github.alex-magter:swiftui2composable-runtime:<version>")
+        }
+    }
+}
 
-Please find the detailed guide [here](https://www.jetbrains.com/help/kotlin-multiplatform-dev/multiplatform-publish-libraries.html).
+dependencies {
+    add("kspIosArm64", "io.github.alex-magter:swiftui2composable-processor:<version>")
+    add("kspIosSimulatorArm64", "io.github.alex-magter:swiftui2composable-processor:<version>")
+}
 
-# Other resources
-* [Publishing via the Central Portal](https://central.sonatype.org/publish-ea/publish-ea-guide/)
-* [Gradle Maven Publish Plugin \- Publishing to Maven Central](https://vanniktech.github.io/gradle-maven-publish-plugin/central/)
+ksp {
+    arg("swiftui2composable.swiftOut", "$rootDir/iosApp/iosApp/Generated")
+    arg("swiftui2composable.framework", "ComposeApp")
+}
+```
+
+## Usage
+
+First of all, annotate the `@Composable` function that will be implemented in SwiftUI with
+`@SwiftUIImplemented` like in the example.
+
+```kotlin
+// iosMain
+@SwiftUIImplemented
+@Composable
+actual fun MyButton(modifier: Modifier, text: String, onClick: () -> Unit) {
+    
+}
+```
+
+After compiling, a function called `MyButtonSwiftUI` is generated. Call it passing all the
+arguments of your original composable, in the same order:
+
+```kotlin
+@SwiftUIImplemented
+@Composable
+actual fun MyButton(modifier: Modifier, text: String, onClick: () -> Unit) =
+    MyButtonSwiftUI(modifier, text, onClick)
+```
+
+In your iosApp (or swift app of your kmp project), you will find a scaffolded view
+called `MyButtonView`, with a parameter `props` which is an object with all the parameters
+of your original function, in this case `text`. And an object `callbacks` with all the lambdas
+of your original composable.
+
+```swift
+struct MyButtonView: View {
+    let props: MyButtonProps
+    let callbacks: any MyButtonCallbacks
+
+    var body: some View { 
+        Button(props.text){ callbacks.onClick() }
+    }
+}
+```
+
+In case you want to use a different name for your view, you can specify it in the annotation.
+
+This code:
+```kotlin
+@SwiftUIImplemented("MySwiftButton")
+@Composable
+actual fun MyButton(modifier: Modifier, text: String, onClick: () -> Unit) =
+    MyButtonSwiftUI(modifier, text, onClick)
+```
+
+Will create this view:
+
+```swift
+struct MySwiftButton: View {
+    let props: MyButtonProps
+    let callbacks: any MyButtonCallbacks
+
+    var body: some View { 
+        Button(props.text){ callbacks.onClick() }
+    }
+}
+```
+
+This is useful to reuse your already made views.
+
+To disable scaffolding, add this parameter to your `build.gradle.kts`:
+
+```kotlin
+ksp {
+    arg("swiftui2composable.scaffold", "false")
+}
+```
+
+Finally, to connect everything, add this line to the entry point of your swift app:
+
+```swift
+SwiftBridge.shared.install(registry: GeneratedSwiftBridge())
+```
+
+### KSP arguments
+
+| Argument | Required | Default | Description |
+|---|---|---|---|
+| `swiftui2composable.swiftOut` | yes | — | Folder of your iOS app where the Swift code is generated |
+| `swiftui2composable.framework` | yes | — | Name of your Kotlin framework |
+| `swiftui2composable.package` | no | `io.github.alexmagter.swiftui2composable.generated` | Package of the generated Kotlin code |
+| `swiftui2composable.viewsOut` | no | `<swiftOut parent>/SwiftUI2Composable` | Folder where the scaffolded views are created |
+| `swiftui2composable.scaffold` | no | `true` | Generate a view for each annotated composable |
+
+## License
+
+MIT

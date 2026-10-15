@@ -13,5 +13,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "multiplatform-library-template"
-include(":library")
+rootProject.name = "SwiftUI2Composable"
+include(":runtime")
+include(":processor")
