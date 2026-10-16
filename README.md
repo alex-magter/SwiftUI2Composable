@@ -69,6 +69,8 @@ struct MyButtonView: View {
     let callbacks: any MyButtonCallbacks
 
     var body: some View { 
+        // Here you can put your code
+        // For example, you can make this implementation:
         Button(props.text){ callbacks.onClick() }
     }
 }
@@ -92,7 +94,7 @@ struct MySwiftButton: View {
     let callbacks: any MyButtonCallbacks
 
     var body: some View { 
-        Button(props.text){ callbacks.onClick() }
+
     }
 }
 ```
