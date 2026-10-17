@@ -4,7 +4,7 @@ SwiftUI2Composable helps you to implement your Composable functions in SwiftUI w
 bridges, UIKit or reactivity. It automatically generates all the boilerplate for you so you can focus
 on implementing your real UI logic.
 
-> Work in progress
+> Work in progress, not yet published in Maven Central
 
 ## Installation
 
